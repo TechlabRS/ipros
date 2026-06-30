@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Excel Export Library (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -110,7 +112,7 @@
 <body class="antialiased min-h-screen flex flex-col">
 
     <!-- Toast Notifications -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full px-4"></div>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full px-4 pointer-events-none"></div>
 
     <!-- Image Expansion / Lightbox Modal -->
     <div id="image-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4" onclick="window.app.closeImageModal()">
@@ -164,31 +166,100 @@
         </div>
     </div>
 
-    <!-- Faculty Secure Master Login Modal -->
+    <!-- Faculty Auth Portal (Master Key & PIN Engine) -->
     <div id="faculty-auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onclick="window.app.closeFacultyAuth()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 rounded-full w-8 h-8 flex items-center justify-center bg-slate-100 transition-colors">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+            <button onclick="window.app.closeFacultyAuth()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 rounded-full w-8 h-8 flex items-center justify-center bg-slate-100 transition-colors z-10">
                 <i class="ph ph-x text-sm font-bold"></i>
             </button>
-            
-            <div class="mb-6 text-center">
-                <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 mx-auto shadow-inner">
-                    <i class="ph ph-shield-check text-3xl"></i>
+
+            <!-- VIEW 1: Standard PIN Login (For Returning Faculty) -->
+            <div id="fac-view-pin-login" class="hidden flex-col">
+                <div class="mb-6 text-center mt-4">
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 mx-auto shadow-inner">
+                        <i class="ph ph-user-circle text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-1" id="fac-welcome-name">Welcome Back</h3>
+                    <p class="text-xs text-slate-500">Enter your 6-digit PIN to access the console.</p>
                 </div>
-                <h3 class="text-2xl font-black text-slate-800 mb-1">Master Console</h3>
-                <p class="text-xs text-slate-500">Secure entry requires authorized faculty master key.</p>
+                <input type="password" id="fac-login-pin" maxlength="6" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-center text-2xl tracking-[0.5em] font-bold mb-4" placeholder="••••••">
+                <button onclick="window.app.processPinLogin()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all text-sm mb-4">
+                    Unlock Console
+                </button>
+                <button onclick="window.app.resetFacultyDevice()" class="text-xs text-slate-400 hover:text-slate-600 font-medium text-center w-full transition-colors">
+                    Not you? Use Master Key
+                </button>
             </div>
 
-            <div id="fac-form-login">
+            <!-- VIEW 2: Master Key Entry (For First Time Setup) -->
+            <div id="fac-view-master" class="flex flex-col">
+                <div class="mb-6 text-center mt-4">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mb-4 mx-auto shadow-inner">
+                        <i class="ph ph-shield-check text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-1">Master Console</h3>
+                    <p class="text-xs text-slate-500">Secure entry requires an authorized faculty master key.</p>
+                </div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Faculty Name</label>
-                <input type="text" id="fac-login-name" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-4 font-semibold" placeholder="e.g. Dr. Veera">
+                <input type="text" id="fac-master-name" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm mb-4 font-semibold" placeholder="e.g. Dr. RAGH">
                 
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Master Access Key</label>
-                <input type="password" id="fac-login-code" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-6" placeholder="Enter Secure Master Code">
+                <input type="password" id="fac-master-code" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm mb-6" placeholder="Enter Secure Master Code">
                 
-                <button onclick="window.app.processFacultyLogin()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all text-sm flex justify-center items-center gap-2">
-                    <i class="ph ph-lock-key text-lg"></i> Authenticate Session
+                <button onclick="window.app.processMasterKey()" class="w-full py-3.5 bg-slate-900 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg transition-all text-sm flex justify-center items-center gap-2">
+                    <i class="ph ph-lock-key text-lg"></i> Authenticate Key
                 </button>
+            </div>
+
+            <!-- VIEW 3: Setup PIN (Triggered after Master Key is Validated) -->
+            <div id="fac-view-setup-pin" class="hidden flex-col">
+                <div class="mb-6 text-center mt-4">
+                    <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4 mx-auto shadow-inner">
+                        <i class="ph ph-password text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-1">Set Your PIN</h3>
+                    <p class="text-xs text-slate-500">Create a 6-digit PIN for future quick access on this device.</p>
+                </div>
+                
+                <input type="password" id="fac-setup-pin1" maxlength="6" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-center text-xl tracking-[0.5em] font-bold mb-3" placeholder="6-Digit PIN">
+                <input type="password" id="fac-setup-pin2" maxlength="6" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-center text-xl tracking-[0.5em] font-bold mb-6" placeholder="Confirm PIN">
+                
+                <button onclick="window.app.setupFacultyPIN()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all text-sm flex justify-center items-center gap-2">
+                    <i class="ph ph-check-circle text-lg"></i> Save & Enter Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Force Password Reset Modal -->
+    <div id="faculty-reset-pwd-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <div class="mb-5">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-3">
+                    <i class="ph ph-shield-warning text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-1">Security Notice</h3>
+                <p class="text-xs text-slate-500">You are using the default password. You must set a new secure password or 6-digit PIN to continue.</p>
+            </div>
+            <input type="password" id="fac-new-pwd" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm transition-all mb-3" placeholder="New Password / PIN">
+            <input type="password" id="fac-confirm-pwd" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm transition-all mb-6" placeholder="Confirm Password / PIN">
+            
+            <button onclick="window.app.updateFacultyPassword()" class="w-full py-3 bg-slate-900 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg transition-all text-sm">
+                Update & Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Custom Modal -->
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+            <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-warning text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Remove Student?</h3>
+            <p class="text-sm text-slate-500 mb-6">Are you sure you want to permanently delete <span id="delete-student-name" class="font-bold text-slate-800"></span> from the roster? This action cannot be reversed.</p>
+            <div class="flex gap-3">
+                <button onclick="window.app.closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm">Cancel</button>
+                <button onclick="window.app.processDelete()" class="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all text-sm shadow-rose-500/30">Yes, Delete</button>
             </div>
         </div>
     </div>
@@ -257,83 +328,85 @@
         </div>
     </div>
 
-    <!-- VIEW 3: Student Registration Portal -->
-    <div id="view-student" class="hidden flex-1 bg-surface-50 p-4 md:p-8 flex items-center justify-center h-screen overflow-y-auto">
-        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 gap-0 bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 relative my-auto">
-            
-            <button onclick="window.app.logout()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-700 flex items-center gap-1 text-sm font-semibold z-20 bg-white/90 px-3 py-1.5 rounded-full shadow-sm">
-                <i class="ph ph-arrow-left"></i> Exit Portal
+    <!-- VIEW 3: Student Registration Portal (UPDATED: Sticky Camera Layout) -->
+    <div id="view-student" class="hidden h-screen bg-surface-50 overflow-y-auto relative">
+        <div class="max-w-5xl mx-auto w-full my-8 p-4">
+            <button onclick="window.app.logout()" class="mb-4 text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-bold transition-colors bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm w-fit">
+                <i class="ph ph-arrow-left"></i> Return to Menu
             </button>
 
-            <!-- Video/Camera Column -->
-            <div class="md:col-span-5 bg-surface-900 p-6 flex flex-col justify-center relative min-h-[300px]">
-                <div class="video-wrapper mt-6 md:mt-0 relative group">
-                    <button onclick="window.app.switchCamera('student-video')" class="absolute top-3 right-3 z-30 p-2 bg-black/40 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-md">
-                        <i class="ph ph-camera-rotate text-lg"></i>
-                    </button>
-                    
-                    <video id="student-video" autoplay muted playsinline></video>
-                    <canvas id="student-canvas"></canvas>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden items-start">
+                
+                <!-- Video/Camera Column (Made Sticky so it follows the user as they scroll the form) -->
+                <div class="lg:col-span-5 bg-surface-900 p-6 relative lg:sticky lg:top-0 h-auto lg:h-full flex flex-col justify-center min-h-[350px]">
+                    <div class="video-wrapper relative group shadow-2xl ring-4 ring-black/10">
+                        <button onclick="window.app.switchCamera('student-video')" class="absolute top-3 right-3 z-30 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors backdrop-blur-md">
+                            <i class="ph ph-camera-rotate text-xl"></i>
+                        </button>
+                        
+                        <video id="student-video" autoplay muted playsinline></video>
+                        <canvas id="student-canvas"></canvas>
+                    </div>
+                    <div class="mt-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2 px-4 leading-relaxed">
+                        <i class="ph ph-shield-check text-brand-400 text-lg"></i> Maintain eye contact. High-res vectorization ensures accurate detection up to 3 feet away.
+                    </div>
                 </div>
-                <div class="mt-4 text-center text-slate-400 text-xs flex items-center justify-center gap-1.5">
-                    <i class="ph ph-shield-check text-brand-400 text-sm"></i> Secure locally processed face vectorization
-                </div>
-            </div>
 
-            <!-- Registration Details Form -->
-            <div class="md:col-span-7 p-6 md:p-10 flex flex-col justify-center">
-                <div id="student-form-section">
-                    <h2 class="text-2xl font-extrabold text-slate-800 mb-1">Student Enrollment</h2>
-                    <p class="text-slate-500 mb-6 text-sm">Submit your information. Aura uses vector models to avoid storing high-res photos to save bandwidth.</p>
+                <!-- Registration Details Form (Scrollable area) -->
+                <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white z-10">
+                    <div id="student-form-section">
+                        <h2 class="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Enroll Biometrics</h2>
+                        <p class="text-slate-500 mb-8 text-sm leading-relaxed">Please ensure you are directly facing the camera while submitting your academic profile details.</p>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Full Legal Name</label>
-                            <input type="text" id="reg-name" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="Aadhya">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Full Legal Name</label>
+                                <input type="text" id="reg-name" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="Aadhya">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Student ID / Roll No</label>
+                                <input type="text" id="reg-roll" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all uppercase" placeholder="CS-2026-042">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Academic Year</label>
+                                <select id="reg-year" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all">
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Section</label>
+                                <select id="reg-section" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all">
+                                    <option value="A">Section A</option>
+                                    <option value="B">Section B</option>
+                                    <option value="C">Section C</option>
+                                    <option value="D">Section D</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Student Mobile</label>
+                                <input type="tel" id="reg-st-mobile" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="e.g. 9876543210">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 pl-1">Parent Mobile</label>
+                                <input type="tel" id="reg-pt-mobile" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="Must be different from yours">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Student ID / Roll No</label>
-                            <input type="text" id="reg-roll" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all uppercase" placeholder="CS-2026-042">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Academic Year</label>
-                            <select id="reg-year" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all">
-                                <option value="1">1st Year</option>
-                                <option value="2">2nd Year</option>
-                                <option value="3">3rd Year</option>
-                                <option value="4">4th Year</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Section</label>
-                            <select id="reg-section" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all">
-                                <option value="A">Section A</option>
-                                <option value="B">Section B</option>
-                                <option value="C">Section C</option>
-                                <option value="D">Section D</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Student Mobile</label>
-                            <input type="tel" id="reg-st-mobile" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="e.g. 9876543210">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Parent Mobile</label>
-                            <input type="tel" id="reg-pt-mobile" class="w-full px-3.5 py-2.5 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" placeholder="Must be different from yours">
-                        </div>
+
+                        <button id="btn-register-face" class="w-full py-4 bg-slate-900 hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:shadow-brand-500/20 transition-all flex justify-center items-center gap-2">
+                            <i class="ph ph-fingerprint text-xl"></i> Extract Mesh & Complete Enrollment
+                        </button>
                     </div>
 
-                    <button id="btn-register-face" class="w-full py-3.5 bg-slate-900 hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:shadow-brand-500/20 transition-all flex justify-center items-center gap-2">
-                        <i class="ph ph-fingerprint text-xl"></i> Complete Enrollment
-                    </button>
-                </div>
-
-                <div id="student-status-section" class="hidden text-center py-10">
-                    <div class="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-500">
-                        <i class="ph ph-check-circle text-3xl"></i>
+                    <div id="student-status-section" class="hidden text-center py-20">
+                        <div class="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500 shadow-inner">
+                            <i class="ph ph-check-circle text-4xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-800 mb-3">Biometrics Secured</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">Your identity mesh has been securely verified and extracted. You may now return to the main menu while awaiting faculty approval.</p>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-2">Biometrics Saved!</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">Your identity package has been successfully sent. Aura will map your face once approved by faculty.</p>
                 </div>
             </div>
         </div>
@@ -680,7 +753,7 @@
                     <div class="flex flex-col gap-4">
                         <div>
                             <h3 class="text-base md:text-lg font-bold text-slate-800">Session Reports & Exports</h3>
-                            <p class="text-xs md:text-sm text-slate-500">Filter historical class sessions and download detailed Excel/CSV attendance logs.</p>
+                            <p class="text-xs md:text-sm text-slate-500">Filter historical class sessions, view individual records, and download Excel/CSV logs.</p>
                         </div>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 border border-slate-200 rounded-2xl shadow-sm">
@@ -715,14 +788,14 @@
 
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
                                 <thead>
                                     <tr class="bg-surface-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                         <th class="p-4 pl-6">Session Details</th>
                                         <th class="p-4">Target Class</th>
                                         <th class="p-4 text-center">Stats (Present / Reg)</th>
                                         <th class="p-4 text-center">Attendance %</th>
-                                        <th class="p-4 pr-6 text-right">Download</th>
+                                        <th class="p-4 pr-6 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="reports-tbody" class="divide-y divide-slate-100 text-xs md:text-sm"></tbody>
@@ -743,17 +816,21 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const State = {
             db: null, auth: null, user: null,
-            appId: typeof __app_id !== 'undefined' ? __app_id : 'demo-att-app',
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'aura-attendance-v2',
             isSubscribed: false, 
             students: [],
             sessions: [], 
+            faculty: [],
             currentStudent: null, 
             studentSessionToken: null,
             currentFaculty: null, 
+            expectedOTP: null,
+            pendingFacultyId: null, 
+            pendingDeleteId: null,
             faceMatcher: null,
             videoStream: null,
             cameraMode: 'user', 
@@ -786,6 +863,11 @@
             }
         };
 
+        const hashStr = async (str) => {
+            const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+
         async function initFirebase() {
             try {
                 const config = {
@@ -801,7 +883,6 @@
                 State.auth = getAuth(app);
                 State.db = getFirestore(app);
 
-                // Safe auth race condition handling
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
                         await signInWithCustomToken(State.auth, __initial_auth_token);
@@ -834,7 +915,6 @@
             if (!State.user || State.isSubscribed) return;
             State.isSubscribed = true;
             
-            // Listen to Students (and enforce Single Device Auth strictly)
             const sRef = collection(State.db, 'artifacts', State.appId, 'public', 'data', 'students');
             onSnapshot(sRef, snap => {
                 State.students = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -859,13 +939,17 @@
                 buildFaceMatcher(); 
             });
 
-            // Listen to Sessions
             const sessRef = collection(State.db, 'artifacts', State.appId, 'public', 'data', 'sessions');
             onSnapshot(sessRef, snap => {
                 State.sessions = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 if(window.app.renderReports && !document.getElementById('tab-reports').classList.contains('hidden')) {
                     window.app.renderReports();
                 }
+            });
+
+            const facRef = collection(State.db, 'artifacts', State.appId, 'public', 'data', 'faculty');
+            onSnapshot(facRef, snap => {
+                State.faculty = snap.docs.map(d => ({id: d.id, ...d.data()}));
             });
         }
 
@@ -967,7 +1051,17 @@
             });
         }
 
+        // Global Execution Bindings Setup
         window.app = {
+            setRole: async role => {
+                UI.hide('view-role');
+                if (role === 'student-enroll') {
+                    UI.show('view-student');
+                    await startWebcam('student-video', { width: 640 }, 'user'); 
+                } else if (role === 'faculty') {
+                    window.app.openFacultyAuth();
+                }
+            },
             logout: () => {
                 if(State.activeSessionId) window.app.endSession(true);
                 stopWebcam();
@@ -1045,58 +1139,124 @@
                 }
             },
 
-            // ============== FACULTY MASTER AUTHENTICATION ============== 
+            // ============== FACULTY PORTAL ============== 
             openFacultyAuth: () => {
-                document.getElementById('faculty-auth-modal').classList.remove('hidden');
-                document.getElementById('faculty-auth-modal').classList.add('flex');
-                document.getElementById('fac-login-name').value = '';
-                document.getElementById('fac-login-code').value = '';
+                const savedId = localStorage.getItem('aura_faculty_id');
+                const savedName = localStorage.getItem('aura_faculty_name');
+                const modal = document.getElementById('faculty-auth-modal');
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                if (savedId && savedName) {
+                    UI.hide('fac-view-master');
+                    UI.hide('fac-view-setup-pin');
+                    UI.show('fac-view-pin-login');
+                    document.getElementById('fac-welcome-name').textContent = `Welcome Back`;
+                    document.getElementById('fac-login-pin').value = '';
+                    setTimeout(() => document.getElementById('fac-login-pin').focus(), 100);
+                } else {
+                    UI.show('fac-view-master');
+                    UI.hide('fac-view-pin-login');
+                    UI.hide('fac-view-setup-pin');
+                    document.getElementById('fac-master-name').value = '';
+                    document.getElementById('fac-master-code').value = '';
+                }
             },
             closeFacultyAuth: () => {
                 document.getElementById('faculty-auth-modal').classList.add('hidden');
                 document.getElementById('faculty-auth-modal').classList.remove('flex');
+                if(!State.currentFaculty) {
+                    UI.show('view-role');
+                }
             },
             
-            processFacultyLogin: async () => {
-                const name = document.getElementById('fac-login-name').value.trim();
-                const code = document.getElementById('fac-login-code').value.trim();
+            processMasterKey: async () => {
+                const name = document.getElementById('fac-master-name').value.trim();
+                const code = document.getElementById('fac-master-code').value.trim();
                 
-                if (!name || !code) return UI.toast('Enter your Name and Master Code.', 'error');
+                if (!name || !code) return UI.toast('Enter your Name and Master Key.', 'error');
                 
-                // --- SECURITY MODULE ---
-                // To prevent the code "VLog-in-966!" from being easily stolen by looking at the source code,
-                // we store its exact CharCodes in a JS array instead of plain text string.
-                const expectedCodes = [86, 76, 111, 103, 45, 105, 110, 45, 57, 54, 54, 33]; // Reconstructs to "VLog-in-966!"
+                const expectedCodes = [86, 76, 111, 103, 45, 105, 110, 45, 57, 54, 54, 33];
                 const masterPass = String.fromCharCode(...expectedCodes);
 
-                // Now we perform Cryptographic Verification (SHA-256 Hashing)
-                // This ensures the plain text input never directly validates against plain text in memory.
-                const encoder = new TextEncoder();
+                const hash1 = await hashStr(code);
+                const hash2 = await hashStr(masterPass);
+
+                if (hash1 !== hash2) return UI.toast('Invalid Master Access Key.', 'error');
                 
-                // 1. Hash the user input
-                const data = encoder.encode(code);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                State.pendingFacultyName = name;
+                UI.hide('fac-view-master');
+                UI.show('fac-view-setup-pin');
+                document.getElementById('fac-setup-pin1').value = '';
+                document.getElementById('fac-setup-pin2').value = '';
+            },
 
-                // 2. Hash the expected master pass
-                const expectedData = encoder.encode(masterPass);
-                const expectedBuffer = await crypto.subtle.digest('SHA-256', expectedData);
-                const expectedArray = Array.from(new Uint8Array(expectedBuffer));
-                const expectedHashHex = expectedArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            setupFacultyPIN: async () => {
+                const p1 = document.getElementById('fac-setup-pin1').value.trim();
+                const p2 = document.getElementById('fac-setup-pin2').value.trim();
+                
+                if(!p1 || p1.length !== 6 || isNaN(p1)) return UI.toast('PIN must be exactly 6 digits.', 'error');
+                if(p1 !== p2) return UI.toast('PINs do not match.', 'error');
 
-                // 3. Verify
-                if (hashHex !== expectedHashHex) {
-                    return UI.toast('Invalid Master Access Code.', 'error');
+                const hashedPin = await hashStr(p1);
+
+                try {
+                    const docRef = await addDoc(collection(State.db, 'artifacts', State.appId, 'public', 'data', 'faculty'), {
+                        name: State.pendingFacultyName,
+                        pinHash: hashedPin,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    localStorage.setItem('aura_faculty_id', docRef.id);
+                    localStorage.setItem('aura_faculty_name', State.pendingFacultyName);
+                    
+                    State.currentFaculty = { id: docRef.id, name: State.pendingFacultyName };
+                    
+                    window.app.closeFacultyAuth();
+                    UI.hide('view-role');
+                    UI.show('view-faculty');
+                    window.app.switchTab('approvals');
+                    UI.toast(`PIN locked securely. Welcome to the Console!`, 'success');
+                } catch (e) {
+                    UI.toast('Failed to register security PIN.', 'error');
+                }
+            },
+
+            processPinLogin: async () => {
+                const pin = document.getElementById('fac-login-pin').value.trim();
+                if(!pin || pin.length !== 6) return UI.toast('Enter 6-digit PIN', 'error');
+
+                const savedId = localStorage.getItem('aura_faculty_id');
+                const facDoc = State.faculty.find(f => f.id === savedId);
+                
+                if(!facDoc) {
+                    window.app.resetFacultyDevice();
+                    return UI.toast('Device profile desynchronized. Use Master Key to restore.', 'error');
                 }
 
-                // Authentication Success
-                State.currentFaculty = { name: name, role: 'master_admin' };
-                window.app.closeFacultyAuth();
-                UI.hide('view-role');
-                UI.show('view-faculty');
-                window.app.switchTab('approvals');
-                UI.toast(`Master Access Granted. Welcome, ${name}`, 'success');
+                const inputHash = await hashStr(pin);
+                
+                if (inputHash === facDoc.pinHash) {
+                    State.currentFaculty = facDoc;
+                    window.app.closeFacultyAuth();
+                    UI.hide('view-role');
+                    UI.show('view-faculty');
+                    window.app.switchTab('approvals');
+                    UI.toast(`Access Granted.`, 'success');
+                } else {
+                    document.getElementById('fac-login-pin').value = '';
+                    UI.toast('Incorrect PIN.', 'error');
+                }
+            },
+
+            resetFacultyDevice: () => {
+                localStorage.removeItem('aura_faculty_id');
+                localStorage.removeItem('aura_faculty_name');
+                UI.hide('fac-view-pin-login');
+                UI.show('fac-view-master');
+                document.getElementById('fac-master-name').value = '';
+                document.getElementById('fac-master-code').value = '';
             },
 
             // ============== VIEWS & DASHBOARDS ============== 
@@ -1195,6 +1355,7 @@
                 scrim.classList.add('hidden');
             },
             
+            // --- NEW: REPORT VIEW & DOWNLOAD MODULE ---
             renderReports: () => {
                 const tbody = document.getElementById('reports-tbody');
                 if(!tbody) return;
@@ -1243,14 +1404,65 @@
                             <span class="text-slate-400 text-xs">/ ${totalReg}</span>
                         </td>
                         <td class="p-4 text-center font-bold ${pctColor}">${pct}%</td>
-                        <td class="p-4 pr-6 text-right">
-                            <button onclick="window.app.downloadCSV('${s.id}')" class="px-3 py-1.5 bg-brand-50 hover:bg-brand-500 hover:text-white text-brand-600 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ml-auto">
-                                <i class="ph ph-download-simple"></i> CSV
+                        <td class="p-4 pr-6 flex justify-end gap-2 items-center">
+                            <button onclick="window.app.viewSessionReport('${s.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-colors">
+                                View
+                            </button>
+                            <button onclick="window.app.downloadCSV('${s.id}')" class="px-3 py-1.5 bg-brand-50 hover:bg-brand-500 hover:text-white text-brand-600 rounded-lg text-[10px] font-bold transition-colors">
+                                CSV
+                            </button>
+                            <button onclick="window.app.downloadExcel('${s.id}')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 rounded-lg text-[10px] font-bold transition-colors">
+                                XLSX
                             </button>
                         </td>
                     `;
                     tbody.appendChild(row);
                 });
+            },
+
+            viewSessionReport: (sessionId) => {
+                const session = State.sessions.find(s => s.id === sessionId);
+                if(!session) return UI.toast('Session data lost.', 'error');
+                
+                const targets = State.students.filter(st => st.status === 'approved' && st.academicYear === session.year && st.section === session.section);
+                targets.sort((a,b) => a.rollNo.localeCompare(b.rollNo, undefined, {numeric: true, sensitivity: 'base'}));
+                
+                document.getElementById('rv-subject').textContent = session.subject;
+                document.getElementById('rv-meta').textContent = `Date: ${session.date} | Hour: ${session.hour} | Target: Year ${session.year} (Sec ${session.section})`;
+                
+                const tbody = document.getElementById('rv-tbody');
+                tbody.innerHTML = '';
+                
+                let presentCount = 0;
+
+                targets.forEach(s => {
+                    const isPresent = (session.attendees || []).includes(s.id);
+                    if (isPresent) presentCount++;
+                    
+                    const statusUI = isPresent 
+                        ? `<span class="px-2 py-1 bg-brand-50 text-brand-600 rounded text-xs font-bold border border-brand-200"><i class="ph ph-check"></i> Present</span>`
+                        : `<span class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs font-bold border border-rose-200"><i class="ph ph-x"></i> Absent</span>`;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="p-3 pl-6 font-mono font-bold text-slate-700">${s.rollNo}</td>
+                        <td class="p-3 font-medium text-slate-800">${s.name}</td>
+                        <td class="p-3 pr-6 text-right">${statusUI}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('rv-summary').textContent = `Present: ${presentCount} / ${targets.length}`;
+                
+                const modal = document.getElementById('report-view-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            },
+
+            closeReportView: () => {
+                const modal = document.getElementById('report-view-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             },
             
             downloadCSV: (sessionId) => {
@@ -1291,6 +1503,46 @@
                 document.body.removeChild(a);
             },
 
+            downloadExcel: (sessionId) => {
+                const session = State.sessions.find(s => s.id === sessionId);
+                if(!session) return UI.toast('Session data lost.', 'error');
+                
+                if (typeof XLSX === 'undefined') return UI.toast('Excel library loading, please try again in a moment.', 'error');
+
+                const targets = State.students.filter(st => st.status === 'approved' && st.academicYear === session.year && st.section === session.section);
+                targets.sort((a,b) => a.rollNo.localeCompare(b.rollNo, undefined, {numeric: true, sensitivity: 'base'}));
+                
+                const totalReg = targets.length;
+                const totalPres = (session.attendees || []).length;
+                const percent = totalReg > 0 ? ((totalPres / totalReg) * 100).toFixed(2) : 0;
+
+                // Create Data Array for SheetJS
+                const ws_data = [
+                    ['Aura AI Attendance Report'],
+                    [],
+                    ['Subject', session.subject],
+                    ['Date', session.date],
+                    ['Hour', session.hour],
+                    ['Target Class', `Year ${session.year} (Sec ${session.section})`],
+                    ['Attendance %', `${percent}% (${totalPres}/${totalReg})`],
+                    [],
+                    ['Roll No', 'Student Name', 'Status']
+                ];
+
+                targets.forEach(s => {
+                    const isPresent = (session.attendees || []).includes(s.id);
+                    ws_data.push([s.rollNo, s.name, isPresent ? 'Present' : 'Absent']);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                
+                // Bold headers styling via SheetJS (basic)
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Attendance Sheet");
+                
+                XLSX.writeFile(wb, `Attendance_${session.subject}_${session.date}.xlsx`);
+            },
+
             updateStatus: async (id, stat) => {
                 try {
                     await updateDoc(doc(State.db, 'artifacts', State.appId, 'public', 'data', 'students', id), { status: stat });
@@ -1321,6 +1573,30 @@
                 const container = document.getElementById('image-modal');
                 container.classList.add('hidden');
                 container.classList.remove('flex');
+            },
+
+            openDeleteModal: (id, name) => {
+                State.pendingDeleteId = id;
+                UI.text('delete-student-name', name);
+                const modal = document.getElementById('delete-confirm-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            },
+            closeDeleteModal: () => {
+                State.pendingDeleteId = null;
+                const modal = document.getElementById('delete-confirm-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            },
+            processDelete: async () => {
+                if (!State.pendingDeleteId) return;
+                try {
+                    await deleteDoc(doc(State.db, 'artifacts', State.appId, 'public', 'data', 'students', State.pendingDeleteId));
+                    UI.toast('Student profile securely deleted.', 'success');
+                    window.app.closeDeleteModal();
+                } catch (e) {
+                    UI.toast('Failed to delete student.', 'error');
+                }
             },
 
             renderRoster: () => {
@@ -1365,9 +1641,12 @@
                                 ${s.academicYear} Yr &bull; Sec ${s.section}
                             </span>
                         </td>
-                        <td class="p-4 pr-6 text-right">
-                            <button onclick="window.app.openImageModal('${s.photoData}', '${s.name}', '${s.rollNo}', '${s.academicYear}', '${s.section}', '${s.studentMobile}', '${s.parentMobile}', '${s.status}')" class="text-xs text-brand-600 hover:text-brand-900 font-bold">
+                        <td class="p-4 pr-6 text-right flex justify-end gap-2 items-center">
+                            <button onclick="window.app.openImageModal('${s.photoData}', '${s.name}', '${s.rollNo}', '${s.academicYear}', '${s.section}', '${s.studentMobile}', '${s.parentMobile}', '${s.status}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-colors">
                                 View Profile
+                            </button>
+                            <button onclick="window.app.openDeleteModal('${s.id}', '${s.name}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 rounded-lg text-[10px] font-bold transition-colors">
+                                Delete
                             </button>
                         </td>
                     `;
@@ -1467,7 +1746,8 @@
                 const displaySize = { width: vid.videoWidth || 640, height: vid.videoHeight || 480 };
                 faceapi.matchDimensions(can, displaySize);
 
-                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.25 });
+                // OPTIMIZATION: Increased inputSize to 608 to detect faces further away.
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 608, scoreThreshold: 0.3 });
                 let timeLeft = 10; 
                 
                 const sweepFrame = async () => {
@@ -1611,7 +1891,8 @@
 
             try {
                 const vid = document.getElementById('student-video');
-                const detection = await faceapi.detectSingleFace(vid, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
+                // OPTIMIZATION: Increased input size to 512 for enrollment to read faces further away
+                const detection = await faceapi.detectSingleFace(vid, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 }))
                     .withFaceLandmarks()
                     .withFaceDescriptor();
 
@@ -1621,11 +1902,12 @@
                     return UI.toast('No face detected. Align head inside frame with solid lighting.', 'error');
                 }
 
+                // OPTIMIZATION: Increasing thumbnail storage clarity from 150px to 300px width.
                 const c = document.createElement('canvas');
                 const currentWidth = vid.videoWidth || 640;
                 const currentHeight = vid.videoHeight || 480;
-                const scale = 150 / currentWidth;
-                c.width = 150; 
+                const scale = 300 / currentWidth;
+                c.width = 300; 
                 c.height = currentHeight * scale;
                 c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height);
                 
@@ -1636,7 +1918,7 @@
                     section: section,
                     studentMobile,
                     parentMobile,
-                    photoData: c.toDataURL('image/jpeg', 0.65), 
+                    photoData: c.toDataURL('image/jpeg', 0.85), 
                     descriptor: Array.from(detection.descriptor),
                     status: 'pending',
                     timestamp: new Date().toISOString()
@@ -1667,10 +1949,5 @@
 
         runBootSequence();
     </script>
-    <script>
-		    	document.addEventListener('contextmenu', function(event) {
-			  	event.preventDefault(); // Prevents the default context menu
-		  	  });
-	  </script>
 </body>
 </html>
