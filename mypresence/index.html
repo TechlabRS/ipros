@@ -39,7 +39,7 @@
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
         
-        /* Video Container Styling */
+        /* Faculty Sweep Video Container Styling */
         .video-wrapper {
             position: relative;
             width: 100%;
@@ -55,12 +55,6 @@
             object-fit: cover;
             display: block;
         }
-
-        /* Dynamic Mirrored Class */
-        .mirrored {
-            transform: scaleX(-1);
-        }
-
         .video-wrapper canvas {
             position: absolute;
             top: 0;
@@ -68,6 +62,11 @@
             width: 100%;
             height: 100%;
             z-index: 10;
+        }
+
+        /* Dynamic Mirrored Class (Applied to User/Front facing cams dynamically) */
+        .mirrored {
+            transform: scaleX(-1);
         }
 
         /* Scanning Radar Animation */
@@ -166,7 +165,7 @@
         </div>
     </div>
 
-    <!-- Faculty Auth Portal (Master Key & PIN Engine) -->
+    <!-- Faculty Secure Master Login Modal -->
     <div id="faculty-auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
             <button onclick="window.app.closeFacultyAuth()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 rounded-full w-8 h-8 flex items-center justify-center bg-slate-100 transition-colors z-10">
@@ -230,24 +229,6 @@
             </div>
         </div>
     </div>
-    <!-- Force Password Reset Modal -->
-    <div id="faculty-reset-pwd-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
-            <div class="mb-5">
-                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-3">
-                    <i class="ph ph-shield-warning text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800 mb-1">Security Notice</h3>
-                <p class="text-xs text-slate-500">You are using the default password. You must set a new secure password or 6-digit PIN to continue.</p>
-            </div>
-            <input type="password" id="fac-new-pwd" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm transition-all mb-3" placeholder="New Password / PIN">
-            <input type="password" id="fac-confirm-pwd" class="w-full px-4 py-3 bg-surface-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm transition-all mb-6" placeholder="Confirm Password / PIN">
-            
-            <button onclick="window.app.updateFacultyPassword()" class="w-full py-3 bg-slate-900 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg transition-all text-sm">
-                Update & Login
-            </button>
-        </div>
-    </div>
 
     <!-- Delete Confirmation Custom Modal -->
     <div id="delete-confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
@@ -260,6 +241,39 @@
             <div class="flex gap-3">
                 <button onclick="window.app.closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm">Cancel</button>
                 <button onclick="window.app.processDelete()" class="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all text-sm shadow-rose-500/30">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Detailed View Modal -->
+    <div id="report-view-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4" onclick="window.app.closeReportView()">
+        <div class="bg-white rounded-2xl max-w-3xl w-full flex flex-col shadow-2xl relative max-h-[90vh]" onclick="event.stopPropagation()">
+            <button onclick="window.app.closeReportView()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 rounded-full w-8 h-8 flex items-center justify-center bg-slate-100 transition-colors z-20">
+                <i class="ph ph-x text-sm font-bold"></i>
+            </button>
+            <div class="p-6 border-b border-slate-100 pr-14">
+                <h3 class="text-xl font-black text-slate-800" id="rv-subject">Subject Name</h3>
+                <p class="text-xs text-slate-500 font-mono mt-1" id="rv-meta">Date: -- | Hr: -- | Year: --</p>
+            </div>
+            <div class="flex-1 overflow-y-auto bg-surface-50">
+                <table class="w-full text-left border-collapse bg-white">
+                    <thead class="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                        <tr class="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <th class="p-3 pl-6">Roll No</th>
+                            <th class="p-3">Student Name</th>
+                            <th class="p-3 text-right pr-6">Attendance Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rv-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-white rounded-b-2xl flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-bold tracking-wider">Summary Stats</span>
+                </div>
+                <div class="text-sm font-black text-slate-800 bg-slate-100 px-4 py-2 rounded-xl" id="rv-summary">Present: 0 / 0</div>
             </div>
         </div>
     </div>
@@ -328,7 +342,7 @@
         </div>
     </div>
 
-    <!-- VIEW 3: Student Registration Portal (UPDATED: Sticky Camera Layout) -->
+    <!-- VIEW 3: Student Registration Portal (UPDATED: Circular Camera Layout & Dedicated Capture Flow) -->
     <div id="view-student" class="hidden h-screen bg-surface-50 overflow-y-auto relative">
         <div class="max-w-5xl mx-auto w-full my-8 p-4">
             <button onclick="window.app.logout()" class="mb-4 text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-bold transition-colors bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm w-fit">
@@ -337,26 +351,42 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden items-start">
                 
-                <!-- Video/Camera Column (Made Sticky so it follows the user as they scroll the form) -->
-                <div class="lg:col-span-5 bg-surface-900 p-6 relative lg:sticky lg:top-0 h-auto lg:h-full flex flex-col justify-center min-h-[350px]">
-                    <div class="video-wrapper relative group shadow-2xl ring-4 ring-black/10">
-                        <button onclick="window.app.switchCamera('student-video')" class="absolute top-3 right-3 z-30 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors backdrop-blur-md">
-                            <i class="ph ph-camera-rotate text-xl"></i>
+                <!-- Circular Video/Camera Capture Column -->
+                <div class="lg:col-span-5 bg-surface-900 p-6 relative lg:sticky lg:top-0 h-auto lg:h-full flex flex-col justify-center items-center min-h-[400px]">
+                    <h3 class="text-white font-bold mb-6 hidden md:block">Face Verification</h3>
+                    
+                    <div class="relative group w-56 h-56 md:w-72 md:h-72 rounded-full overflow-hidden shadow-[0_0_40px_rgba(20,184,166,0.3)] ring-4 ring-brand-500/50 mb-8 bg-black">
+                        <!-- Camera Flip -->
+                        <button onclick="window.app.switchCamera('student-video')" class="absolute top-4 right-1/2 translate-x-1/2 z-30 p-2 bg-black/40 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-md">
+                            <i class="ph ph-camera-rotate text-lg"></i>
                         </button>
                         
-                        <video id="student-video" autoplay muted playsinline></video>
-                        <canvas id="student-canvas"></canvas>
+                        <!-- The mirrored class is applied dynamically in JS based on camera mode, but we default it here -->
+                        <video id="student-video" autoplay muted playsinline class="w-full h-full object-cover mirrored"></video>
+                        
+                        <!-- Preview of captured face -->
+                        <img id="student-captured-preview" class="absolute inset-0 w-full h-full object-cover hidden z-20" />
                     </div>
-                    <div class="mt-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2 px-4 leading-relaxed">
-                        <i class="ph ph-shield-check text-brand-400 text-lg"></i> Maintain eye contact. High-res vectorization ensures accurate detection up to 3 feet away.
+
+                    <!-- Dedicated Capture Buttons -->
+                    <button id="btn-capture-face" onclick="window.app.captureFace()" class="px-8 py-3.5 bg-brand-500 hover:bg-brand-400 text-white font-bold rounded-full shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center gap-2 active:scale-95 w-full max-w-[250px]">
+                        <i class="ph ph-camera text-xl"></i> Take Snapshot
+                    </button>
+                    
+                    <button id="btn-retake-face" onclick="window.app.retakeFace()" class="hidden px-8 py-3.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-full shadow-lg transition-all items-center justify-center gap-2 active:scale-95 w-full max-w-[250px]">
+                        <i class="ph ph-arrow-counter-clockwise text-xl"></i> Retake Photo
+                    </button>
+                    
+                    <div class="mt-6 text-center text-slate-400 text-xs flex items-center justify-center gap-1.5 px-4 leading-relaxed">
+                        <i class="ph ph-shield-check text-brand-400 text-lg"></i> Frame your face securely in the circle to extract mesh identity.
                     </div>
                 </div>
 
-                <!-- Registration Details Form (Scrollable area) -->
+                <!-- Registration Details Form -->
                 <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white z-10">
                     <div id="student-form-section">
                         <h2 class="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Enroll Biometrics</h2>
-                        <p class="text-slate-500 mb-8 text-sm leading-relaxed">Please ensure you are directly facing the camera while submitting your academic profile details.</p>
+                        <p class="text-slate-500 mb-8 text-sm leading-relaxed">Please capture your face using the camera panel, then submit your academic profile details.</p>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
                             <div class="sm:col-span-2">
@@ -396,7 +426,7 @@
                         </div>
 
                         <button id="btn-register-face" class="w-full py-4 bg-slate-900 hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:shadow-brand-500/20 transition-all flex justify-center items-center gap-2">
-                            <i class="ph ph-fingerprint text-xl"></i> Extract Mesh & Complete Enrollment
+                            <i class="ph ph-check-circle text-xl"></i> Complete Enrollment
                         </button>
                     </div>
 
@@ -520,6 +550,9 @@
                 </button>
                 <button onclick="window.app.switchTab('reports')" id="nav-reports" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium transition-all">
                     <i class="ph ph-file-csv text-lg"></i> Reports & Analytics
+                </button>
+                <button onclick="window.app.switchTab('master')" id="nav-master" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium transition-all">
+                    <i class="ph ph-database text-lg"></i> Master Data
                 </button>
             </nav>
 
@@ -808,6 +841,51 @@
                     </div>
                 </div>
 
+                <!-- TAB 5: Master Student Data Upload -->
+                <div id="tab-master" class="hidden max-w-5xl mx-auto space-y-6">
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <h3 class="text-base md:text-lg font-bold text-slate-800">Master Roster Data</h3>
+                            <p class="text-xs md:text-sm text-slate-500">Upload a CSV or Excel file containing approved Roll Numbers and Names. Only students in this master list can enroll.</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 border border-slate-200 rounded-2xl shadow-sm text-center">
+                            <div class="w-16 h-16 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 mx-auto">
+                                <i class="ph ph-file-csv text-3xl"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 mb-2">Upload Master List</h4>
+                            <p class="text-xs text-slate-500 mb-6 max-w-sm mx-auto">File must contain headers: <br><strong>Column 1: Roll No</strong> | <strong>Column 2: Name</strong></p>
+                            
+                            <input type="file" id="master-file" accept=".csv, .xlsx, .xls" class="hidden" onchange="window.app.uploadMasterData(event)">
+                            <button onclick="document.getElementById('master-file').click()" class="px-6 py-3 bg-slate-900 hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 mx-auto">
+                                <i class="ph ph-upload-simple text-lg"></i> Select File & Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-surface-50 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 text-sm">Current Master Records</h3>
+                            <span class="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md text-xs font-bold" id="master-count">0 Loaded</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse min-w-[400px]">
+                                <thead class="sticky top-0 bg-white">
+                                    <tr class="bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="p-4 pl-6">Roll Number</th>
+                                        <th class="p-4">Student Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="master-tbody" class="divide-y divide-slate-100 text-xs md:text-sm"></tbody>
+                            </table>
+                        </div>
+                        <div id="master-empty" class="hidden flex flex-col items-center justify-center py-16 text-slate-400">
+                            <i class="ph ph-database text-5xl mb-3 text-slate-200"></i>
+                            <p class="font-medium text-sm">Master roster is empty.</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -816,22 +894,22 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const State = {
             db: null, auth: null, user: null,
-            appId: typeof __app_id !== 'undefined' ? __app_id : 'aura-attendance-v2',
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'demo-att-app',
             isSubscribed: false, 
             students: [],
             sessions: [], 
             faculty: [],
+            masterStudents: [],
             currentStudent: null, 
             studentSessionToken: null,
             currentFaculty: null, 
-            expectedOTP: null,
-            pendingFacultyId: null, 
+            pendingFacultyName: null, 
             pendingDeleteId: null,
-            faceMatcher: null,
+            faceMatcher: null, // Cohort-specific face matcher
             videoStream: null,
             cameraMode: 'user', 
             activeSessionId: null,
@@ -839,7 +917,8 @@
             presentIds: new Set(),
             isSweeping: false,
             sweepTimeout: null,
-            timerInterval: null
+            timerInterval: null,
+            tempEnrollment: null
         };
 
         const UI = {
@@ -859,7 +938,7 @@
                 setTimeout(() => {
                     t.classList.add('translate-y-full', 'opacity-0');
                     setTimeout(() => t.remove(), 300);
-                }, 3500);
+                }, 4500);
             }
         };
 
@@ -887,7 +966,6 @@
                     try {
                         await signInWithCustomToken(State.auth, __initial_auth_token);
                     } catch (e) {
-                        console.warn("Custom token login failed, falling back to anonymous", e);
                         await signInAnonymously(State.auth);
                     }
                 } else {
@@ -936,7 +1014,6 @@
                 
                 renderApprovals();
                 if(window.app.renderRoster) window.app.renderRoster();
-                buildFaceMatcher(); 
             });
 
             const sessRef = collection(State.db, 'artifacts', State.appId, 'public', 'data', 'sessions');
@@ -950,6 +1027,16 @@
             const facRef = collection(State.db, 'artifacts', State.appId, 'public', 'data', 'faculty');
             onSnapshot(facRef, snap => {
                 State.faculty = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            });
+
+            const masterRef = doc(State.db, 'artifacts', State.appId, 'public', 'data', 'config', 'master_roster');
+            onSnapshot(masterRef, snap => {
+                if (snap.exists()) {
+                    State.masterStudents = snap.data().list || [];
+                } else {
+                    State.masterStudents = [];
+                }
+                if (window.app.renderMasterData) window.app.renderMasterData();
             });
         }
 
@@ -1001,17 +1088,6 @@
             }
         }
 
-        function buildFaceMatcher() {
-            const approved = State.students.filter(s => s.status === 'approved');
-            if (!approved.length) { State.faceMatcher = null; return; }
-
-            const Labeled = approved.map(s => {
-                const desc = s.descriptor ? new Float32Array(s.descriptor) : new Float32Array(128);
-                return new faceapi.LabeledFaceDescriptors(s.id, [desc]);
-            });
-            State.faceMatcher = new faceapi.FaceMatcher(Labeled, 0.45); 
-        }
-
         function renderApprovals() {
             const tbody = document.getElementById('approvals-tbody');
             if(!tbody) return;
@@ -1051,7 +1127,6 @@
             });
         }
 
-        // Global Execution Bindings Setup
         window.app = {
             setRole: async role => {
                 UI.hide('view-role');
@@ -1074,6 +1149,11 @@
                 State.studentSessionToken = null;
                 State.currentFaculty = null;
                 
+                if (State.tempEnrollment) {
+                    window.app.retakeFace();
+                }
+                State.tempEnrollment = null;
+                
                 UI.hide('view-student'); 
                 UI.hide('view-faculty');
                 UI.hide('view-student-dash');
@@ -1094,8 +1174,67 @@
                 UI.toast(`Switched to ${newMode === 'user' ? 'Front' : 'Rear'} Camera`, 'info');
                 await startWebcam(vidId, res, newMode);
             },
+
+            captureFace: async () => {
+                const btn = document.getElementById('btn-capture-face');
+                btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin text-xl"></i> Scanning...`;
+                btn.disabled = true;
+
+                try {
+                    const vid = document.getElementById('student-video');
+                    const detection = await faceapi.detectSingleFace(vid, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 }))
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+
+                    if(!detection) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph ph-camera text-xl"></i> Take Snapshot`;
+                        return UI.toast('No face detected. Align head inside frame with solid lighting.', 'error');
+                    }
+
+                    const c = document.createElement('canvas');
+                    const currentWidth = vid.videoWidth || 640;
+                    const currentHeight = vid.videoHeight || 480;
+                    
+                    const scale = 300 / currentWidth;
+                    c.width = 300; 
+                    c.height = currentHeight * scale;
+                    c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height);
+                    
+                    State.tempEnrollment = {
+                        descriptor: Array.from(detection.descriptor),
+                        photoData: c.toDataURL('image/jpeg', 0.85)
+                    };
+
+                    const preview = document.getElementById('student-captured-preview');
+                    preview.src = State.tempEnrollment.photoData;
+                    preview.classList.remove('hidden');
+                    
+                    UI.hide('btn-capture-face');
+                    UI.show('btn-retake-face');
+                    
+                    UI.toast('Face captured successfully!', 'success');
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="ph ph-camera text-xl"></i> Take Snapshot`;
+                    UI.toast('Failed to process facial features.', 'error');
+                }
+            },
             
-            // ============== STUDENT ENTRY ============== 
+            retakeFace: () => {
+                State.tempEnrollment = null;
+                const preview = document.getElementById('student-captured-preview');
+                preview.classList.add('hidden');
+                preview.src = '';
+                
+                UI.show('btn-capture-face');
+                UI.hide('btn-retake-face');
+                
+                const btn = document.getElementById('btn-capture-face');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph ph-camera text-xl"></i> Take Snapshot`;
+            },
+            
             openStudentLogin: () => {
                 const modal = document.getElementById('student-login-modal');
                 modal.classList.remove('hidden');
@@ -1139,7 +1278,6 @@
                 }
             },
 
-            // ============== FACULTY PORTAL ============== 
             openFacultyAuth: () => {
                 const savedId = localStorage.getItem('aura_faculty_id');
                 const savedName = localStorage.getItem('aura_faculty_name');
@@ -1259,7 +1397,6 @@
                 document.getElementById('fac-master-code').value = '';
             },
 
-            // ============== VIEWS & DASHBOARDS ============== 
             renderStudentDash: () => {
                 const st = State.currentStudent;
                 if(!st) return;
@@ -1276,7 +1413,7 @@
 
                 const recentSessions = State.sessions.filter(s => {
                     const sessDate = new Date(s.timestamp || new Date());
-                    return sessDate >= oneWeekAgo && s.year === st.academicYear && s.section === st.section;
+                    return sessDate >= oneWeekAgo && String(s.year) === String(st.academicYear) && String(s.section) === String(st.section);
                 });
 
                 const tbody = document.getElementById('dash-sessions-tbody');
@@ -1324,7 +1461,7 @@
                 scrim.classList.toggle('hidden');
             },
             switchTab: tab => {
-                ['approvals', 'roster', 'session', 'reports'].forEach(t => {
+                ['approvals', 'roster', 'session', 'reports', 'master'].forEach(t => {
                     UI.hide(`tab-${t}`);
                     const nav = document.getElementById(`nav-${t}`);
                     if(nav) nav.className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium transition-all';
@@ -1346,6 +1483,9 @@
                 } else if (tab === 'reports') {
                     headTitle = 'Reports & Analytics';
                     window.app.renderReports();
+                } else if (tab === 'master') {
+                    headTitle = 'Master Student Data';
+                    window.app.renderMasterData();
                 }
                 UI.text('header-title', headTitle);
 
@@ -1355,7 +1495,75 @@
                 scrim.classList.add('hidden');
             },
             
-            // --- NEW: REPORT VIEW & DOWNLOAD MODULE ---
+            uploadMasterData: (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+                        const masterList = [];
+                        
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row[0] && row[1]) {
+                                masterList.push({ 
+                                    roll: String(row[0]).trim().toUpperCase(), 
+                                    name: String(row[1]).trim() 
+                                });
+                            }
+                        }
+
+                        if (masterList.length === 0) {
+                            return UI.toast('No valid records found. Ensure Column 1 is Roll No and Column 2 is Name.', 'error');
+                        }
+
+                        await setDoc(doc(State.db, 'artifacts', State.appId, 'public', 'data', 'config', 'master_roster'), {
+                            list: masterList,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        UI.toast(`Master Data Uploaded successfully. ${masterList.length} records active.`, 'success');
+                        document.getElementById('master-file').value = ""; 
+                    } catch (err) {
+                        console.error(err);
+                        UI.toast('Failed to parse and upload Master Data.', 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            },
+
+            renderMasterData: () => {
+                const tbody = document.getElementById('master-tbody');
+                if(!tbody) return;
+
+                tbody.innerHTML = '';
+
+                if(!State.masterStudents || State.masterStudents.length === 0) {
+                    UI.show('master-empty');
+                    UI.text('master-count', '0 Loaded');
+                    return;
+                } else {
+                    UI.hide('master-empty');
+                    UI.text('master-count', `${State.masterStudents.length} Verified Records Loaded`);
+                }
+
+                State.masterStudents.forEach(m => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition-colors";
+                    row.innerHTML = `
+                        <td class="p-4 pl-6 font-mono font-bold text-slate-700">${m.roll}</td>
+                        <td class="p-4 font-medium text-slate-800">${m.name}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            },
+
             renderReports: () => {
                 const tbody = document.getElementById('reports-tbody');
                 if(!tbody) return;
@@ -1371,8 +1579,8 @@
                 
                 if(searchSub) filtered = filtered.filter(s => s.subject.toLowerCase().includes(searchSub));
                 if(filterDate) filtered = filtered.filter(s => s.date === filterDate);
-                if(filterYr !== 'all') filtered = filtered.filter(s => String(s.year) === filterYr);
-                if(filterSec !== 'all') filtered = filtered.filter(s => s.section === filterSec);
+                if(filterYr !== 'all') filtered = filtered.filter(s => String(s.year) === String(filterYr));
+                if(filterSec !== 'all') filtered = filtered.filter(s => String(s.section) === String(filterSec));
 
                 if(!filtered.length) {
                     UI.show('reports-empty');
@@ -1382,7 +1590,7 @@
                 }
 
                 filtered.forEach(s => {
-                    const totalReg = State.students.filter(st => st.status === 'approved' && st.academicYear === s.year && st.section === s.section).length;
+                    const totalReg = State.students.filter(st => st.status === 'approved' && String(st.academicYear) === String(s.year) && String(st.section) === String(s.section)).length;
                     const present = (s.attendees || []).length;
                     const pct = totalReg > 0 ? ((present / totalReg) * 100).toFixed(1) : 0;
                     const pctColor = pct > 75 ? 'text-teal-600' : (pct > 50 ? 'text-amber-500' : 'text-rose-500');
@@ -1424,7 +1632,7 @@
                 const session = State.sessions.find(s => s.id === sessionId);
                 if(!session) return UI.toast('Session data lost.', 'error');
                 
-                const targets = State.students.filter(st => st.status === 'approved' && st.academicYear === session.year && st.section === session.section);
+                const targets = State.students.filter(st => st.status === 'approved' && String(st.academicYear) === String(session.year) && String(st.section) === String(session.section));
                 targets.sort((a,b) => a.rollNo.localeCompare(b.rollNo, undefined, {numeric: true, sensitivity: 'base'}));
                 
                 document.getElementById('rv-subject').textContent = session.subject;
@@ -1469,7 +1677,7 @@
                 const session = State.sessions.find(s => s.id === sessionId);
                 if(!session) return UI.toast('Session data lost.', 'error');
                 
-                const targets = State.students.filter(st => st.status === 'approved' && st.academicYear === session.year && st.section === session.section);
+                const targets = State.students.filter(st => st.status === 'approved' && String(st.academicYear) === String(session.year) && String(st.section) === String(session.section));
                 targets.sort((a,b) => a.rollNo.localeCompare(b.rollNo, undefined, {numeric: true, sensitivity: 'base'}));
                 
                 let csv = 'Roll No,Student Name,Subject,Date,Status\n';
@@ -1509,14 +1717,13 @@
                 
                 if (typeof XLSX === 'undefined') return UI.toast('Excel library loading, please try again in a moment.', 'error');
 
-                const targets = State.students.filter(st => st.status === 'approved' && st.academicYear === session.year && st.section === session.section);
+                const targets = State.students.filter(st => st.status === 'approved' && String(st.academicYear) === String(session.year) && String(st.section) === String(session.section));
                 targets.sort((a,b) => a.rollNo.localeCompare(b.rollNo, undefined, {numeric: true, sensitivity: 'base'}));
                 
                 const totalReg = targets.length;
                 const totalPres = (session.attendees || []).length;
                 const percent = totalReg > 0 ? ((totalPres / totalReg) * 100).toFixed(2) : 0;
 
-                // Create Data Array for SheetJS
                 const ws_data = [
                     ['Aura AI Attendance Report'],
                     [],
@@ -1535,11 +1742,8 @@
                 });
 
                 const ws = XLSX.utils.aoa_to_sheet(ws_data);
-                
-                // Bold headers styling via SheetJS (basic)
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Attendance Sheet");
-                
                 XLSX.writeFile(wb, `Attendance_${session.subject}_${session.date}.xlsx`);
             },
 
@@ -1617,7 +1821,7 @@
                     );
                 }
                 if (filterYr !== 'all') filtered = filtered.filter(s => String(s.academicYear) === filterYr);
-                if (filterSec !== 'all') filtered = filtered.filter(s => s.section === filterSec);
+                if (filterSec !== 'all') filtered = filtered.filter(s => String(s.section) === filterSec);
 
                 filtered.sort((a, b) => a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true, sensitivity: 'base' }));
 
@@ -1654,6 +1858,30 @@
                 });
             },
 
+            // --- OPTIMIZATION: DYNAMIC COHORT MATCHER FOR 1,000+ STUDENTS ---
+            buildSessionMatcher: (targetYear, targetSection) => {
+                // We ONLY load students belonging to the specific class session into the AI memory
+                const cohort = State.students.filter(s => 
+                    s.status === 'approved' && 
+                    String(s.academicYear) === String(targetYear) && 
+                    String(s.section) === String(targetSection)
+                );
+
+                if (!cohort.length) { 
+                    State.faceMatcher = null; 
+                    return; 
+                }
+
+                const Labeled = cohort.map(s => {
+                    const desc = s.descriptor ? new Float32Array(s.descriptor) : new Float32Array(128);
+                    return new faceapi.LabeledFaceDescriptors(s.id, [desc]);
+                });
+                
+                // RELAXED THRESHOLD: Widened from 0.45 to 0.55.
+                // 0.55 handles variations in classroom lighting and angles significantly better.
+                State.faceMatcher = new faceapi.FaceMatcher(Labeled, 0.55); 
+            },
+
             startSession: async () => {
                 const subject = document.getElementById('session-subject').value.trim();
                 const year = document.getElementById('session-year').value;
@@ -1662,7 +1890,11 @@
                 const date = document.getElementById('session-date').value.trim();
 
                 if(!subject || !date) return UI.toast('Please set the subject and date', 'error');
-                if(!State.faceMatcher) return UI.toast('Biometric matcher base is empty. Ensure students are approved first.', 'error');
+
+                // Generate the brain dynamically for this specific class only
+                window.app.buildSessionMatcher(year, section);
+
+                if(!State.faceMatcher) return UI.toast(`No approved students found for Year ${year} (Sec ${section}).`, 'error');
 
                 State.activeSessionId = Date.now().toString();
                 State.presentIds.clear();
@@ -1683,6 +1915,7 @@
                 
                 await startWebcam('faculty-video', { width: 1280, height: 720 }, 'environment'); 
             },
+            
             endSession: async (skipSave = false) => {
                 if(!State.activeSessionId) return;
                 
@@ -1746,8 +1979,7 @@
                 const displaySize = { width: vid.videoWidth || 640, height: vid.videoHeight || 480 };
                 faceapi.matchDimensions(can, displaySize);
 
-                // OPTIMIZATION: Increased inputSize to 608 to detect faces further away.
-                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 608, scoreThreshold: 0.3 });
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 608, scoreThreshold: 0.4 });
                 let timeLeft = 10; 
                 
                 const sweepFrame = async () => {
@@ -1775,25 +2007,16 @@
                             const match = State.faceMatcher.findBestMatch(d.descriptor);
                             const isKnown = match.label !== 'unknown';
                             
-                            let isCorrectSection = false;
-                            if (isKnown) {
-                                const matchedStudent = State.students.find(x => x.id === match.label);
-                                if (matchedStudent && 
-                                    matchedStudent.academicYear === State.sessionData.year && 
-                                    matchedStudent.section === State.sessionData.section) {
-                                    isCorrectSection = true;
-                                }
-                            }
+                            // Since we already filtered State.faceMatcher by Cohort, any known match is correct.
                             
-                            // Unmirrored coordinate calculation
                             const boxCoordinates = d.detection.box;
                             let drawX = boxCoordinates.x;
                             if (isMirrored) {
                                 drawX = can.width - boxCoordinates.x - boxCoordinates.width;
                             }
                             
-                            const color = isCorrectSection ? '#14b8a6' : (isKnown ? '#eab308' : '#f43f5e');
-                            const label = isCorrectSection ? 'Verified Match' : (isKnown ? 'Wrong Section' : 'Unrecognized');
+                            const color = isKnown ? '#14b8a6' : '#f43f5e';
+                            const label = isKnown ? 'Verified Match' : 'Unrecognized';
                             
                             ctx.strokeStyle = color;
                             ctx.lineWidth = 3;
@@ -1809,7 +2032,7 @@
                             ctx.fontWeight = 'bold';
                             ctx.fillText(label, drawX + 5, boxCoordinates.y - 7);
 
-                            if (isCorrectSection && !State.presentIds.has(match.label)) {
+                            if (isKnown && !State.presentIds.has(match.label)) {
                                 State.presentIds.add(match.label);
                                 newMatch = true;
                             }
@@ -1868,10 +2091,9 @@
             }
         };
 
-        // Student Onboarding Logic
         document.getElementById('btn-register-face').addEventListener('click', async () => {
             const name = document.getElementById('reg-name').value.trim();
-            const roll = document.getElementById('reg-roll').value.trim();
+            const roll = document.getElementById('reg-roll').value.trim().toUpperCase();
             const year = document.getElementById('reg-year').value;
             const section = document.getElementById('reg-section').value;
             const studentMobile = document.getElementById('reg-st-mobile').value.trim();
@@ -1885,32 +2107,42 @@
                 return UI.toast('Student Mobile and Parent Mobile cannot be identical.', 'error');
             }
 
+            if (State.masterStudents && State.masterStudents.length > 0) {
+                const isAuthorized = State.masterStudents.find(m => m.roll === roll);
+                if (!isAuthorized) {
+                    return UI.toast('Invalid Roll Number. Not found in Faculty Master Roster.', 'error');
+                }
+            } else {
+                return UI.toast('Registration Locked: Faculty has not uploaded the Master Roster yet.', 'error');
+            }
+
+            const existingRoll = State.students.find(s => s.rollNo.toUpperCase() === roll);
+            if (existingRoll) {
+                return UI.toast('This Roll Number is already registered in the system.', 'error');
+            }
+
+            if(!State.tempEnrollment || !State.tempEnrollment.descriptor) {
+                return UI.toast('Please capture your face using the camera button first.', 'error');
+            }
+
+            // DUPLICATE FACE CHECK - Stays strict at 0.45 threshold globally
+            if (State.students.length > 0) {
+                const Labeled = State.students.map(s => {
+                    return new faceapi.LabeledFaceDescriptors(s.rollNo, [new Float32Array(s.descriptor)]);
+                });
+                const duplicateMatcher = new faceapi.FaceMatcher(Labeled, 0.45); 
+                const match = duplicateMatcher.findBestMatch(new Float32Array(State.tempEnrollment.descriptor));
+                
+                if (match.label !== 'unknown') {
+                    return UI.toast(`Registration Blocked: Face is already registered to Roll No: ${match.label}`, 'error');
+                }
+            }
+
             const btn = document.getElementById('btn-register-face');
-            btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin text-xl"></i> Computing Face Mesh...`;
+            btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin text-xl"></i> Finalizing Profile...`;
             btn.disabled = true;
 
             try {
-                const vid = document.getElementById('student-video');
-                // OPTIMIZATION: Increased input size to 512 for enrollment to read faces further away
-                const detection = await faceapi.detectSingleFace(vid, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 }))
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
-                if(!detection) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="ph ph-fingerprint text-xl"></i> Complete Enrollment`;
-                    return UI.toast('No face detected. Align head inside frame with solid lighting.', 'error');
-                }
-
-                // OPTIMIZATION: Increasing thumbnail storage clarity from 150px to 300px width.
-                const c = document.createElement('canvas');
-                const currentWidth = vid.videoWidth || 640;
-                const currentHeight = vid.videoHeight || 480;
-                const scale = 300 / currentWidth;
-                c.width = 300; 
-                c.height = currentHeight * scale;
-                c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height);
-                
                 await addDoc(collection(State.db, 'artifacts', State.appId, 'public', 'data', 'students'), {
                     name, 
                     rollNo: roll,
@@ -1918,24 +2150,24 @@
                     section: section,
                     studentMobile,
                     parentMobile,
-                    photoData: c.toDataURL('image/jpeg', 0.85), 
-                    descriptor: Array.from(detection.descriptor),
+                    photoData: State.tempEnrollment.photoData, 
+                    descriptor: State.tempEnrollment.descriptor,
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
 
                 stopWebcam();
+                State.tempEnrollment = null;
                 UI.hide('student-form-section'); 
                 UI.show('student-status-section');
                 UI.toast('Biometric credentials locked.', 'success');
             } catch(e) {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="ph ph-fingerprint text-xl"></i> Complete Enrollment`;
+                btn.innerHTML = `<i class="ph ph-check-circle text-xl"></i> Complete Enrollment`;
                 UI.toast('Failed to save biometric profile.', 'error');
             }
         });
 
-        // App Bootloader
         async function runBootSequence() {
             const dbReady = await initFirebase();
             if(!dbReady) return UI.text('loading-text', 'Database Node Connection Error');
